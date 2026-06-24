@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>...</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Share+Tech+Mono&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --red: #ff2020;
+    --dim: #1a0000;
+  }
+
+  body {
+    min-height: 100vh;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Share Tech Mono', monospace;
+    overflow: hidden;
+    cursor: none;
+    position: relative;
+  }
+
+  .cursor {
+    position: fixed;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--red);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.05s;
+    mix-blend-mode: difference;
+  }
+  .cursor::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px; height: 4px;
+    background: var(--red);
+    border-radius: 50%;
+  }
+
+  canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.18;
+  }
+
+  .static {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+    background-size: 150px;
+    pointer-events: none;
+    opacity: 0.06;
+    animation: staticMove 0.08s steps(1) infinite;
+  }
+
+  @keyframes staticMove {
+    0%   { background-position: 0 0; }
+    25%  { background-position: -20px 10px; }
+    50%  { background-position: 10px -15px; }
+    75%  { background-position: -5px 20px; }
+    100% { background-position: 15px -5px; }
+  }
+
+  .vignette {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(80,0,0,0.85) 100%);
+    z-index: 1;
+    pointer-events: none;
+    animation: vigPulse 3s ease-in-out infinite;
+  }
+
+  @keyframes vigPulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
+
+  .content {
+    position: relative;
+    z-index: 5;
+    text-align: center;
+    padding: 20px;
+    max-width: 600px;
+  }
+
+  .opening {
+    color: #333;
+    font-size: 0.75rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    margin-bottom: 50px;
+    opacity: 0;
+    animation: fadeIn 1s ease 0.5s forwards;
+  }
+
+  .glitch-wrap {
+    position: relative;
+    margin-bottom: 40px;
+  }
+
+  .glitch {
+    font-family: 'Creepster', cursive;
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    color: #fff;
+    position: relative;
+    opacity: 0;
+    animation: fadeIn 0.5s ease 2s forwards, glitchAnim 6s ease-in-out 3s infinite;
+    line-height: 1.1;
+  }
+
+  .glitch::before,
+  .glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    opacity: 0.8;
+  }
+
+  .glitch::before {
+    color: var(--red);
+    animation: glitchTop 6s ease-in-out 3s infinite;
+    clip-path: polygon(0 0, 100% 0, 100% 35%, 0 35%);
+  }
+
+  .glitch::after {
+    color: #00ffff;
+    animation: glitchBottom 6s ease-in-out 3.1s infinite;
+    clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
+  }
+
+  @keyframes glitchAnim {
+    0%, 85%, 100% { transform: translate(0); }
+    86% { transform: translate(-3px, 1px); }
+    88% { transform: translate(3px, -1px); }
+    90% { transform: translate(0); }
+  }
+
+  @keyframes glitchTop {
+    0%, 85%, 100% { transform: translate(0); opacity: 0; }
+    86% { transform: translate(-4px, -2px); opacity: 0.8; }
+    88% { transform: translate(4px, 2px); opacity: 0.8; }
+    90% { transform: translate(0); opacity: 0; }
+  }
+
+  @keyframes glitchBottom {
+    0%, 85%, 100% { transform: translate(0); opacity: 0; }
+    87% { transform: translate(4px, 2px); opacity: 0.8; }
+    89% { transform: translate(-4px, -2px); opacity: 0.8; }
+    91% { transform: translate(0); opacity: 0; }
+  }
+
+  .subtext {
+    color: #555;
+    font-size: 0.8rem;
+    letter-spacing: 0.25em;
+    line-height: 2;
+    opacity: 0;
+    animation: fadeIn 1s ease 3s forwards;
+  }
+
+  .subtext .highlight {
+    color: var(--red);
+  }
+
+  .line {
+    width: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--red), transparent);
+    margin: 28px auto;
+    animation: lineGrow 1s ease 1.5s forwards;
+  }
+
+  @keyframes lineGrow {
+    to { width: 300px; }
+  }
+
+  .typewriter {
+    font-family: 'Creepster', cursive;
+    font-size: clamp(1.3rem, 4vw, 2rem);
+    color: var(--red);
+    min-height: 2.5em;
+    opacity: 0;
+    animation: fadeIn 0.1s ease 1.8s forwards;
+    text-shadow: 0 0 20px rgba(255,32,32,0.5);
+    letter-spacing: 0.05em;
+  }
+
+  .cursor-blink {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: var(--red);
+    vertical-align: middle;
+    margin-left: 3px;
+    animation: blink 0.7s step-end infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  .footer-msg {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #1a1a1a;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    z-index: 5;
+    white-space: nowrap;
+    animation: footerReveal 2s ease 5s forwards;
+  }
+
+  @keyframes footerReveal {
+    to { color: #333; }
+  }
+
+  @keyframes fadeIn {
+    to { opacity: 1; }
+  }
+
+  .flash {
+    position: fixed;
+    inset: 0;
+    background: var(--red);
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    animation: flashScreen 0.2s ease 1.9s;
+  }
+
+  @keyframes flashScreen {
+    0% { opacity: 0; }
+    50% { opacity: 0.15; }
+    100% { opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<canvas id="rain"></canvas>
+<div class="static"></div>
+<div class="vignette"></div>
+<div class="flash"></div>
+
+<div class="content">
+  <p class="opening">[ transmisión entrante ]</p>
+
+  <div class="glitch-wrap">
+    <div class="glitch" data-text="Nos vemos mañana.">Nos vemos mañana.</div>
+  </div>
+
+  <div class="line"></div>
+
+  <div class="typewriter" id="typewriter"><span class="cursor-blink"></span></div>
+
+  <div class="line"></div>
+
+  <p class="subtext">
+    sistema sobrecargado<br>
+    <span class="highlight">// ando demasiado ocupado //</span><br>
+    no intentes contactarme antes
+  </p>
+</div>
+
+<p class="footer-msg">...te estoy viendo</p>
+
+<script>
+  const cursor = document.getElementById('cursor');
+  document.addEventListener('mousemove', (e) => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+  });
+
+  const canvas = document.getElementById('rain');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const cols = Math.floor(canvas.width / 18);
+  const drops = Array(cols).fill(0);
+  const chars = '01アイウエオカキクケコサシスセソ死闇夜恐ΣΩΨΔΛ∞≠'.split('');
+
+  function drawRain() {
+    ctx.fillStyle = 'rgba(0,0,0,0.05)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ff2020';
+    ctx.font = '14px monospace';
+    drops.forEach((y, i) => {
+      const char = chars[Math.floor(Math.random() * chars.length)];
+      ctx.fillText(char, i * 18, y * 18);
+      if (y * 18 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+      else drops[i]++;
+    });
+  }
+  setInterval(drawRain, 50);
+
+  window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  });
+
+  function playAmbient() {
+    const actx = new (window.AudioContext || window.webkitAudioContext)();
+
+    const osc1 = actx.createOscillator();
+    const gain1 = actx.createGain();
+    osc1.connect(gain1);
+    gain1.connect(actx.destination);
+    osc1.type = 'sawtooth';
+    osc1.frequency.setValueAtTime(55, actx.currentTime);
+    gain1.gain.setValueAtTime(0, actx.currentTime);
+    gain1.gain.linearRampToValueAtTime(0.04, actx.currentTime + 2);
+    gain1.gain.linearRampToValueAtTime(0.02, actx.currentTime + 5);
+    osc1.start();
+    osc1.stop(actx.currentTime + 6);
+
+    const osc2 = actx.createOscillator();
+    const gain2 = actx.createGain();
+    osc2.connect(gain2);
+    gain2.connect(actx.destination);
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(440, actx.currentTime + 2);
+    osc2.frequency.linearRampToValueAtTime(220, actx.currentTime + 5);
+    gain2.gain.setValueAtTime(0, actx.currentTime + 2);
+    gain2.gain.linearRampToValueAtTime(0.05, actx.currentTime + 3);
+    gain2.gain.linearRampToValueAtTime(0, actx.currentTime + 5.5);
+    osc2.start(actx.currentTime + 2);
+    osc2.stop(actx.currentTime + 6);
+  }
+
+  const msg = "ando demasiado ocupado...";
+  const tw = document.getElementById('typewriter');
+  let i = 0;
+
+  function type() {
+    if (i < msg.length) {
+      tw.innerHTML = msg.substring(0, i + 1) + '<span class="cursor-blink"></span>';
+      i++;
+      setTimeout(type, 80 + Math.random() * 60);
+    }
+  }
+
+  setTimeout(() => {
+    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+    playAmbient();
+    setTimeout(type, 200);
+  }, 1900);
+</script>
+
+</body>
+</html>
